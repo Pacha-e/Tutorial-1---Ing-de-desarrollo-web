@@ -1,8 +1,12 @@
 # Course Projects
 
 This repository holds the projects I build during the Web Development Engineering
-course. Every tutorial lives in its own folder so the work stays organized as the
-course moves forward.
+course. The tutorials are cumulative, so each one keeps growing the same code base.
+
+| Project | Tutorials | What it is |
+| ------- | --------- | ---------- |
+| [`fullstack/`](fullstack/) | 01, 02 | MPA / SSR application with Express, TypeScript and EJS |
+| [`frontend/`](frontend/) | 03, 04 | SPA / CSR application with Vue.js, TypeScript, Pinia and Tailwind |
 
 ## Tutorial 01 — MPA / SSR with Express (`fullstack/`)
 
@@ -122,3 +126,87 @@ The tutorial ends by asking to add a new `Contact` section. I added it end to en
 - a `/contact` route in `Routes.ts`,
 - a `contact.ejs` view with basic contact information,
 - a `Contact` link in the sidebar of `app.ejs`.
+
+## Tutorial 02 — Models and books (`fullstack/`)
+
+Tutorial 02 completes the MVC of the same Express app by adding the model layer.
+
+| Piece | File |
+| ----- | ---- |
+| Model | `src/models/Book.ts` |
+| In-memory "database" | `src/data/books.ts` |
+| List of books | `src/views/home/books.ejs` → `/books` |
+| Single book | `src/views/home/show.ejs` → `/books/:id` |
+| Book not found | `src/views/home/notFound.ejs` (404) |
+
+`/main-point` (the URL used by the tutorial) redirects to `/books`.
+
+### Assignment: the bugs of Tutorial 02
+
+The tutorial asks to find the 10+ mistakes it introduces on purpose and to propose a
+cleaner version without adding libraries. The full list — 15 issues and how each one
+is solved here — is in [`fullstack/TUTORIAL-02-FIXES.md`](fullstack/TUTORIAL-02-FIXES.md).
+
+## Tutorial 03 — SPA / CSR with Vue.js (`frontend/`)
+
+A single-page application rendered on the client (SPA / CSR), scaffolded with
+`create-vue`: Vue 3, TypeScript, Vue Router, Pinia, ESLint + oxlint, Prettier, and
+Tailwind CSS through the `@tailwindcss/vite` plugin.
+
+The layout of the Express app was rebuilt as a Vue component: `App.vue` holds the
+sidebar and the header, and `<RouterView />` swaps the page. The header title comes
+from `meta.title` of each route.
+
+> While installing, `npm install` failed because `oxlint` (`~1.74.0`) did not match the
+> version required by `eslint-plugin-oxlint` (`~1.73.0`). As the tutorial anticipates,
+> `oxlint` was pinned to `~1.73.0` in `package.json`.
+
+### Assignment: the Contact section
+
+`ContactView.vue`, a `/contact` route, and a `Contact` link in the sidebar.
+
+### Running the app
+
+```bash
+cd frontend
+npm install
+npm run dev      # http://localhost:5173/
+```
+
+| Script              | What it does                                  |
+| ------------------- | --------------------------------------------- |
+| `npm run dev`       | Vite dev server with HMR.                     |
+| `npm run build`     | Type-check and build for production.          |
+| `npm run type-check`| Runs `vue-tsc`.                               |
+| `npm run lint`      | Runs oxlint and ESLint (with `--fix`).        |
+| `npm run format`    | Formats `src/` with Prettier.                 |
+
+## Tutorial 04 — Books, services and Pinia (`frontend/`)
+
+Tutorial 04 grows the SPA with the layers a real application needs.
+
+| Layer | File | Purpose |
+| ----- | ---- | ------- |
+| Interface | `src/interfaces/BookInterface.ts` | Shape of a book |
+| DTO | `src/dtos/CreateBookDTO.ts` | Input of the creation form (`Omit<BookInterface, 'id'>`) |
+| Store | `src/stores/bookstore.ts` | Pinia store holding the books |
+| Seeder | `src/stores/bookseeder.ts` | Initial data of the "database" |
+| Persistence | `src/PiniaConfig.ts` | Loads and saves the whole Pinia state in `localStorage` (key `piniaState`) |
+| Service | `src/services/BookService.ts` | The only place the views touch the store |
+| Views | `src/views/Books*.vue` | List, detail and creation pages |
+
+Routes: `/books`, `/books/create` and `/books/:id` (the literal route is declared
+before the dynamic one so `create` is never read as an id).
+
+The views never import the store or the data directly — they only call
+`BookService`. Swapping `localStorage` for a real API later means rewriting one file.
+
+### Assignment: delete the last book
+
+`BookService.deleteLastBook()` plus a `Delete last book` button in
+`BooksIndexView.vue`. The button is disabled when the library is empty, and the
+change is written to `localStorage` by the same watcher that persists everything else.
+
+Because books can now be deleted, `createBook` no longer derives the new id from
+`books.length + 1` (which repeats ids after a deletion): it uses the highest id in
+use plus one.
