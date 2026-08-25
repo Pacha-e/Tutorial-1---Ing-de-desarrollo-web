@@ -11,6 +11,10 @@ export class BookService {
     return useBookStore().books.find((book) => book.id === id);
   }
 
+  static getCategories(): string[] {
+    return [...new Set(useBookStore().books.map((book) => book.category))];
+  }
+
   static createBook(book: CreateBookDTO): void {
     const books = useBookStore().books;
     // The next id comes from the highest one in use, so removing a book never

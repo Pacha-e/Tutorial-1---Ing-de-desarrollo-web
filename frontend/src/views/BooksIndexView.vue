@@ -1,7 +1,16 @@
 <script setup lang="ts">
+import { computed, ref } from 'vue';
 import { BookService } from '@/services/BookService.js';
+import { formatPriceCOP } from '@/utils/format.js';
 
 const books = BookService.getBooks();
+const selectedCategory = ref('');
+
+// Both derive from the store, so a created or deleted book updates them.
+const categories = computed(() => BookService.getCategories());
+const filteredBooks = computed(() =>
+  selectedCategory.value ? books.filter((book) => book.category === selectedCategory.value) : books,
+);
 
 // Assignment: remove the last book of the "database".
 function deleteLastBook() {
@@ -12,28 +21,41 @@ function deleteLastBook() {
 <template>
   <section>
     <div class="max-w-7xl mx-auto">
-      <div class="flex justify-end gap-3 mb-6">
-        <button
-          type="button"
-          class="inline-block bg-red-600 text-white font-semibold px-5 py-2 rounded hover:bg-red-700 transition disabled:opacity-40 disabled:cursor-not-allowed"
-          :disabled="books.length === 0"
-          @click="deleteLastBook"
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <select
+          v-model="selectedCategory"
+          aria-label="Filter by category"
+          class="border border-gray-300 rounded py-2 px-3 focus:outline-none focus:ring focus:border-blue-300"
         >
-          <i class="fas fa-trash mr-2"></i>Delete last book
-        </button>
-        <RouterLink
-          to="/books/create"
-          class="inline-block bg-blue-600 text-white font-semibold px-5 py-2 rounded hover:bg-blue-700 transition"
-          >+ Add Book</RouterLink
-        >
+          <option value="">All Categories</option>
+          <option v-for="category in categories" :key="category" :value="category">
+            {{ category }}
+          </option>
+        </select>
+
+        <div class="flex gap-3">
+          <button
+            type="button"
+            class="inline-block bg-red-600 text-white font-semibold px-5 py-2 rounded hover:bg-red-700 transition disabled:opacity-40 disabled:cursor-not-allowed"
+            :disabled="books.length === 0"
+            @click="deleteLastBook"
+          >
+            <i class="fas fa-trash mr-2"></i>Delete last book
+          </button>
+          <RouterLink
+            to="/books/create"
+            class="inline-block bg-blue-600 text-white font-semibold px-5 py-2 rounded hover:bg-blue-700 transition"
+            >+ Add Book</RouterLink
+          >
+        </div>
       </div>
 
-      <p v-if="books.length === 0" class="text-center text-gray-500">
-        There are no books in the library yet.
+      <p v-if="filteredBooks.length === 0" class="text-center text-gray-500">
+        There are no books to show.
       </p>
 
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        <div v-for="book in books" :key="book.id">
+        <div v-for="book in filteredBooks" :key="book.id">
           <div
             class="bg-white rounded-lg shadow-md hover:shadow-lg transition duration-300 p-6 border border-gray-200"
           >
@@ -68,7 +90,7 @@ function deleteLastBook() {
             <div class="bg-gray-50 rounded-lg p-3 mb-4">
               <div class="flex justify-between text-sm">
                 <span class="text-gray-600">Price:</span>
-                <span class="font-semibold">${{ book.price }}</span>
+                <span class="font-semibold">{{ formatPriceCOP(book.price) }}</span>
               </div>
             </div>
 
